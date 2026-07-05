@@ -42,6 +42,18 @@ class ProjectsViewModel(
         }
     }
 
+    fun loadByLeader(leaderId: Long) = scope.launch {
+        try {
+            _isLoading.value = true
+            _projects.value = repo.getByLeader()
+            _error.value = null
+        } catch (e: Exception) {
+            _error.value = e.message
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
     fun create(
         name: String,
         description: String,

@@ -6,5 +6,5 @@ object ApiFactory {
     val projects: ProjectsApi by lazy { RetrofitProvider.retrofit.create(ProjectsApi::class.java) }
     val tasks: TasksApi by lazy { RetrofitProvider.retrofit.create(TasksApi::class.java) }
     val notifications: NotificationsApi = RetrofitProvider.retrofit.create(NotificationsApi::class.java)
-
+    val aiDashboard: AiDashboardApi by lazy { RetrofitProvider.retrofit.create(AiDashboardApi::class.java) }
 }

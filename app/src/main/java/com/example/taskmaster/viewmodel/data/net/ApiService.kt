@@ -2,6 +2,7 @@ package com.example.taskmaster.viewmodel.data.net
 
 import com.example.taskmaster.viewmodel.data.auth.LoginRequest
 import com.example.taskmaster.viewmodel.data.auth.LoginResponse
+import com.example.taskmaster.viewmodel.data.ai.LeaderDashboardDto
 import com.example.taskmaster.viewmodel.data.auth.SignUpRequest
 import com.example.taskmaster.viewmodel.data.notifications.NotificationDto
 import com.example.taskmaster.viewmodel.data.projects.ProjectCodeRequest
@@ -68,11 +69,11 @@ interface ProjectsApi {
     suspend fun setProjectCode(@Path("projectId") projectId: Long, @Body body: ProjectCodeRequest): ProjectDto
 
 
-    @GET("api/v1/projects/member/{memberId}")
-    suspend fun getProjectsByMember(@Path("memberId") memberId: Long): List<ProjectDto>
+    @GET("api/v1/projects/member")
+    suspend fun getProjectsByMember(): List<ProjectDto>
 
-    @GET("api/v1/projects/leader/{leaderId}")
-    suspend fun getProjectsByLeader(@Path("leaderId") leaderId: Long): List<ProjectDto>
+    @GET("api/v1/projects/leader")
+    suspend fun getProjectsByLeader(): List<ProjectDto>
 
     @GET("api/v1/projects/join/{key}")
     suspend fun joinProjectByKey(@Path("key") key: String): ProjectDto
@@ -141,4 +142,9 @@ interface NotificationsApi {
     // GET /api/v1/notifications/me
     @GET("api/v1/notifications/me")
     suspend fun getMyNotifications(): List<NotificationDto>
+}
+
+interface AiDashboardApi {
+    @GET("api/v1/ai/dashboard/leader")
+    suspend fun getLeaderDashboard(): LeaderDashboardDto
 }

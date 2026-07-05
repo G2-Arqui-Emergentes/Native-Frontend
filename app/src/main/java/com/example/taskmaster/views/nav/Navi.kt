@@ -5,10 +5,12 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
@@ -34,6 +36,12 @@ import com.example.taskmaster.views.layout.task.CreateTask
 import com.example.taskmaster.views.layout.task.EditTask
 
 data class BottomTab(val route: String, val icon: Int, val label: String)
+
+private val NavBackground = Color(0xFFF4F5F7)
+private val NavSelected = Color(0xFF0F9E6E)
+private val NavUnselected = Color(0xFF6B7280)
+private val NavIndicator = Color(0xFFE7F6F0)
+private val NavBorder = Color(0xFFE5E7EB)
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -66,7 +74,17 @@ fun Navi(context: Context) {
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.secondaryContainer) {
+                Surface(
+                    color = NavBackground,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 10.dp,
+                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                    modifier = Modifier
+                ) {
+                    NavigationBar(
+                        containerColor = NavBackground,
+                        tonalElevation = 0.dp
+                    ) {
                     tabsIcons.forEach { t ->
                         val selected = when (t.route) {
                             "projects" -> currentRoute == "projects" ||
@@ -96,11 +114,14 @@ fun Navi(context: Context) {
                                 Text(text = t.label)
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor   = MaterialTheme.colorScheme.primary,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurface,
-                                indicatorColor      = MaterialTheme.colorScheme.secondaryContainer
+                                selectedIconColor = NavSelected,
+                                selectedTextColor = NavSelected,
+                                unselectedIconColor = NavUnselected,
+                                unselectedTextColor = NavUnselected,
+                                indicatorColor = NavIndicator
                             )
                         )
+                    }
                     }
                 }
             }

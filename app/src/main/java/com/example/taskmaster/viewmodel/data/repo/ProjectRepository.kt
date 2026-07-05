@@ -34,13 +34,13 @@ class ProjectRepository(
     suspend fun setCode(projectId: Long, code: String): ProjectDto =
         api.setProjectCode(projectId, ProjectCodeRequest(code))
 
-    // GET /api/v1/projects/member?memberId={memberId}
-    suspend fun getByMember(memberId: Long): List<ProjectDto> =
-        api.getProjectsByMember(memberId)
+    // GET /api/v1/projects/member
+    suspend fun getByMember(): List<ProjectDto> =
+        api.getProjectsByMember()
 
-    // GET /api/v1/projects/leader?leaderId={leaderId}
-    suspend fun getByLeader(leaderId: Long): List<ProjectDto> =
-        api.getProjectsByLeader(leaderId)
+    // GET /api/v1/projects/leader
+    suspend fun getByLeader(): List<ProjectDto> =
+        api.getProjectsByLeader()
 
     // GET /api/v1/projects/join/{key}
     suspend fun joinByKey(key: String): ProjectDto =

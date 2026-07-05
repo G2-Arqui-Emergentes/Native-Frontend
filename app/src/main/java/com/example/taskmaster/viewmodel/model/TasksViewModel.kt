@@ -45,6 +45,13 @@ class TasksViewModel(
         _tasks.value = repo.getByProject(projectId)
     }
 
+    fun loadByProjects(projectIds: List<Long>) = launchCatching(_isLoading, _error) {
+        _tasks.value = projectIds
+            .distinct()
+            .flatMap { repo.getByProject(it) }
+            .distinctBy { it.taskId }
+    }
+
     fun loadByProjectAndUser(projectId: Long, userId: Long) = launchCatching(_isLoading, _error) {
         _tasks.value = repo.getByProjectAndUser(projectId, userId)
     }
