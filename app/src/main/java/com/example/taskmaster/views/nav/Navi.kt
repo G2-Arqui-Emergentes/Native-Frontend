@@ -9,6 +9,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -25,6 +28,7 @@ import com.example.taskmaster.views.layout.Calendar
 import com.example.taskmaster.views.layout.notification.Notifiations
 import com.example.taskmaster.views.layout.ProfileScreen
 import com.example.taskmaster.views.layout.UserProfile
+import com.example.taskmaster.views.layout.chatbot.ChatbotBottomSheet
 import com.example.taskmaster.views.layout.project.AnalyticsProjects
 import com.example.taskmaster.views.layout.project.MemberList
 import com.example.taskmaster.views.layout.project.Membership
@@ -36,6 +40,7 @@ import com.example.taskmaster.views.layout.project.ProjectTasks
 import com.example.taskmaster.views.layout.project.UserStats
 import com.example.taskmaster.views.layout.task.CreateTask
 import com.example.taskmaster.views.layout.task.EditTask
+import com.example.taskmaster.viewmodel.model.ChatbotViewModel
 
 data class BottomTab(val route: String, val icon: Int, val label: String)
 
@@ -49,6 +54,8 @@ private val NavBorder = Color(0xFFE5E7EB)
 @Composable
 fun Navi(context: Context) {
     val nav = rememberNavController()
+    val chatbotVm = remember { ChatbotViewModel() }
+    var showChatbot by remember { mutableStateOf(false) }
 
     // Tabs principales
     val tabsIcons = listOf(
@@ -62,6 +69,7 @@ fun Navi(context: Context) {
 
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route.orEmpty()
+    val currentProjectId = backStackEntry?.arguments?.getLong("projectId")
 
     val showBottomBar =
         currentRoute in baseRoutes ||
@@ -73,10 +81,23 @@ fun Navi(context: Context) {
                 currentRoute.startsWith("projectSettings") ||
                 currentRoute.startsWith("projectTasks") ||
                 currentRoute.startsWith("projectStats")
+    val showChatbotFab = currentRoute.isNotBlank() && currentRoute != "login" && currentRoute != "register"
 
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        floatingActionButton = {
+            if (showChatbotFab) {
+                FloatingActionButton(
+                    onClick = { showChatbot = true },
+                    containerColor = Color(0xFFEC1926),
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Text("AI")
+                }
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 Surface(
@@ -207,5 +228,12 @@ fun Navi(context: Context) {
             composable("membership")   { Membership(nav) }
 
         }
+
+        ChatbotBottomSheet(
+            visible = showChatbot,
+            projectId = currentProjectId,
+            viewModel = chatbotVm,
+            onDismiss = { showChatbot = false }
+        )
     }
 }

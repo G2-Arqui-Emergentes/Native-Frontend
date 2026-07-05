@@ -4,6 +4,8 @@ import com.example.taskmaster.viewmodel.data.auth.LoginRequest
 import com.example.taskmaster.viewmodel.data.auth.LoginResponse
 import com.example.taskmaster.viewmodel.data.ai.LeaderDashboardDto
 import com.example.taskmaster.viewmodel.data.auth.SignUpRequest
+import com.example.taskmaster.viewmodel.data.chatbot.ChatbotRequest
+import com.example.taskmaster.viewmodel.data.chatbot.ChatbotResponse
 import com.example.taskmaster.viewmodel.data.notifications.NotificationDto
 import com.example.taskmaster.viewmodel.data.projects.ProjectCodeRequest
 import com.example.taskmaster.viewmodel.data.projects.ProjectCreateRequest
@@ -147,4 +149,9 @@ interface NotificationsApi {
 interface AiDashboardApi {
     @GET("api/v1/ai/dashboard/leader")
     suspend fun getLeaderDashboard(): LeaderDashboardDto
+}
+
+interface ChatbotApi {
+    @POST("api/v1/ai/chatbot/message")
+    suspend fun sendMessage(@Body body: ChatbotRequest): ChatbotResponse
 }
