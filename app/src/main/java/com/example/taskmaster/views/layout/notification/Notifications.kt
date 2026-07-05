@@ -1,87 +1,170 @@
-// views/layout/notification/Notifiations.kt
 package com.example.taskmaster.views.layout.notification
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icon
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.unit.dp
-import com.example.taskmaster.R
+import androidx.navigation.NavHostController
+import com.example.taskmaster.views.layout.common.AppTopHeader
+import com.example.taskmaster.views.layout.TeamProjectCard
+import com.example.taskmaster.viewmodel.model.ProjectsViewModel
+import com.example.taskmaster.viewmodel.sharedPreferences.Prefs
+import com.example.taskmaster.viewmodel.ui.users.UsersViewModel
+
+private val AnalyticsBackground = Color(0xFFF9FAFB)
+private val AnalyticsTextPrimary = Color(0xFF111827)
+private val AnalyticsTextSecondary = Color(0xFF6B7280)
+private val AnalyticsBrand = Color(0xFFEC1926)
 
 @Composable
-fun Notifiations() {
+fun Notifiations(
+    context: Context,
+    nav: NavHostController,
+    userVm: UsersViewModel = remember { UsersViewModel() },
+    projectsVm: ProjectsViewModel = remember { ProjectsViewModel() }
+) {
+    val user by userVm.user.collectAsState()
+    val userLoading by userVm.isLoading.collectAsState()
+    val projects by projectsVm.projects.collectAsState()
+    val projectsLoading by projectsVm.isLoading.collectAsState()
+    val error by projectsVm.error.collectAsState()
 
-    var query by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        Prefs.loadEmail(context)?.let(userVm::loadByEmail)
+    }
 
-    Column {
-        Text(
-            text = "Notificaciones",
-            style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(15.dp)
-        )
+    LaunchedEffect(user?.id, user?.roles) {
+        val currentUser = user ?: return@LaunchedEffect
+        val isLeader = currentUser.roles.any { it.equals("ROLE_LEADER", ignoreCase = true) }
+        if (isLeader) {
+            projectsVm.loadByLeader(currentUser.id)
+        } else {
+            projectsVm.loadByMember()
+        }
+    }
 
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 15.dp)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AnalyticsBackground)
+    ) {
+        when {
+            (userLoading && user == null) || (projectsLoading && projects.isEmpty()) -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = AnalyticsBrand)
+                }
+            }
 
-            // BUSCADOR
-            TextField(
-                value = query,
-                onValueChange = { query = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 6.dp, bottom = 12.dp)
-                    .heightIn(min = 40.dp),
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyLarge,
-                placeholder = {
-                    Text(
-                        "Buscar notificación",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                },
-                trailingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_search),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(20.dp)
-                    )
-                },
-                shape = RoundedCornerShape(24.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        AppTopHeader(
+                            user = user,
+                            onNotificationsClick = {},
+                            onProfileClick = { nav.navigate("profile") }
+                        )
+                    }
 
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    cursorColor = MaterialTheme.colorScheme.primary,
+                    item {
+                        Column {
+                            Text(
+                                text = "Analytics",
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = AnalyticsTextPrimary
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Select a project to open its analytics view.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = AnalyticsTextSecondary
+                            )
+                        }
+                    }
 
-                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    if (!error.isNullOrBlank()) {
+                        item {
+                            Text(
+                                text = error.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
 
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    errorIndicatorColor = Color.Transparent
-                )
-            )
-
-            NotificationList(searchQuery = query)
+                    if (projects.isEmpty()) {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color.White)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 28.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "No projects available",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = AnalyticsTextPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Projects will appear here so you can open their analytics.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = AnalyticsTextSecondary
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        items(
+                            items = projects,
+                            key = { it.projectId }
+                        ) { project ->
+                            TeamProjectCard(
+                                project = project,
+                                onClick = { nav.navigate("projectStats/${project.projectId}") }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

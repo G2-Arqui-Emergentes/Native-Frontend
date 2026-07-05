@@ -1,5 +1,6 @@
 package com.example.taskmaster.views.layout
 
+import android.content.Context
 import android.graphics.Paint
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
@@ -35,6 +36,8 @@ import com.example.taskmaster.viewmodel.data.tasks.TaskDto
 import com.example.taskmaster.viewmodel.data.tasks.TaskPriority
 import com.example.taskmaster.viewmodel.model.CalendarDay
 import com.example.taskmaster.viewmodel.model.CalendarViewModel
+import com.example.taskmaster.viewmodel.sharedPreferences.Prefs
+import com.example.taskmaster.viewmodel.ui.users.UsersViewModel
 import kotlinx.coroutines.launch
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -45,6 +48,8 @@ private const val CALENDAR_COLUMNS = 7
 
 @Composable
 fun Calendar(
+    context: Context,
+    userVm: UsersViewModel = remember { UsersViewModel() },
     vm: CalendarViewModel = remember { CalendarViewModel() }
 ) {
     val isLoading by vm.isLoading.collectAsState()
@@ -53,8 +58,16 @@ fun Calendar(
     val currentMonth by vm.currentMonth.collectAsState()
     val calendarDays by vm.calendarDays.collectAsState(initial = emptyList())
     val selectedDateTasks by vm.selectedDateTasks.collectAsState(initial = emptyList())
+    val user by userVm.user.collectAsState()
 
-    LaunchedEffect(Unit) { vm.loadAllTasks() }
+    LaunchedEffect(Unit) {
+        Prefs.loadEmail(context)?.let(userVm::loadByEmail)
+    }
+
+    LaunchedEffect(user?.id) {
+        val currentUserId = user?.id ?: return@LaunchedEffect
+        vm.loadTasksByUser(currentUserId)
+    }
 
     Column(
         modifier = Modifier
@@ -290,6 +303,22 @@ private fun CalendarGrid(
                 )
             }
 
+            if (!isSelected && day.tasks.isNotEmpty()) {
+                drawRoundRect(
+                    RedWine500.copy(alpha = 0.14f),
+                    topLeft = Offset(column * xSteps + 8f, row * ySteps + 8f),
+                    size = Size(xSteps - 16f, ySteps - 16f),
+                    cornerRadius = CornerRadius(8f, 8f)
+                )
+                drawRoundRect(
+                    color = RedWine500.copy(alpha = 0.40f),
+                    topLeft = Offset(column * xSteps + 8f, row * ySteps + 8f),
+                    size = Size(xSteps - 16f, ySteps - 16f),
+                    cornerRadius = CornerRadius(8f, 8f),
+                    style = Stroke(width = 3f)
+                )
+            }
+
             // Indicador de tareas
             if (day.tasks.isNotEmpty()) {
                 drawCircle(
@@ -299,7 +328,7 @@ private fun CalendarGrid(
                         TaskPriority.LOW -> PriorityGreen
                         null -> RedWine600
                     },
-                    radius = 4f,
+                    radius = 5f,
                     center = Offset(
                         column * xSteps + xSteps - 15f,
                         row * ySteps + 15f

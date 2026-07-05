@@ -3,7 +3,6 @@ package com.example.taskmaster.views.layout.project
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,17 +38,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.taskmaster.R
+import com.example.taskmaster.views.layout.common.AppTopHeader
 import com.example.taskmaster.viewmodel.data.ai.LeaderDashboardDto
 import com.example.taskmaster.viewmodel.data.notifications.NotificationDto
 import com.example.taskmaster.viewmodel.data.projects.ProjectDto
@@ -78,7 +75,6 @@ private val DashboardTextPrimary = Color(0xFF111827)
 private val DashboardTextSecondary = Color(0xFF6B7280)
 private val DashboardPositive = Color(0xFF0F9E6E)
 private val DashboardNegative = Color(0xFFEE4445)
-private val DashboardLogoRed = Color(0xFFED1826)
 private val DashboardAccent = Color(0xFF111827)
 private val DashboardMuted = Color(0xFF9CA3AF)
 private val DashboardWarning = Color(0xFFF59E0B)
@@ -165,7 +161,7 @@ fun Proyect(
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 item {
-                    DashboardHeader(
+                    AppTopHeader(
                         user = user,
                         onNotificationsClick = { nav.navigate("notification") },
                         onProfileClick = { nav.navigate("profile") }
@@ -209,100 +205,6 @@ fun Proyect(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DashboardHeader(
-    user: UserDto?,
-    onNotificationsClick: () -> Unit,
-    onProfileClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(52.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(R.drawable.taskmaster_logoblanco),
-                contentDescription = "TaskMaster logo",
-                modifier = Modifier.size(52.dp),
-                alpha = 0.95f,
-                colorFilter = ColorFilter.tint(DashboardLogoRed)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "TaskMaster",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = DashboardTextPrimary
-                )
-            )
-            Text(
-                text = "Leader",
-                style = MaterialTheme.typography.bodySmall,
-                color = DashboardTextSecondary
-            )
-        }
-
-        HeaderSquareButton(
-            iconRes = R.drawable.ic_notifications,
-            contentDescription = "Notifications",
-            onClick = onNotificationsClick
-        )
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Color.White)
-                .border(1.dp, DashboardBorder, RoundedCornerShape(14.dp))
-                .shadow(6.dp, RoundedCornerShape(14.dp), ambientColor = DashboardPositive.copy(alpha = 0.08f))
-                .clickable(onClick = onProfileClick),
-            contentAlignment = Alignment.Center
-        ) {
-            AsyncImage(
-                model = user?.imageUrl ?: R.drawable.ic_profile_placeholder,
-                contentDescription = "Profile",
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
-            )
-        }
-    }
-}
-
-@Composable
-private fun HeaderSquareButton(
-    iconRes: Int,
-    contentDescription: String,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(44.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(DashboardSurfaceAlt)
-            .border(1.dp, DashboardBorder, RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = contentDescription,
-            modifier = Modifier.size(20.dp)
-        )
     }
 }
 

@@ -1,309 +1,317 @@
 package com.example.taskmaster.views.layout
 
 import android.content.Context
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.taskmaster.R
-import com.example.taskmaster.viewmodel.data.net.TokenStore
+import com.example.taskmaster.views.layout.common.AppTopHeader
+import com.example.taskmaster.viewmodel.data.projects.ProjectDto
+import com.example.taskmaster.viewmodel.model.ProjectsViewModel
 import com.example.taskmaster.viewmodel.sharedPreferences.Prefs
 import com.example.taskmaster.viewmodel.ui.users.UsersViewModel
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+
+private val TeamBackground = Color(0xFFF9FAFB)
+private val TeamSurface = Color(0xFFF4F5F7)
+private val TeamBorder = Color(0xFFE5E7EB)
+private val TeamTextPrimary = Color(0xFF111827)
+private val TeamTextSecondary = Color(0xFF6B7280)
+private val TeamBrand = Color(0xFFEC1926)
 
 @Composable
 fun UserProfile(
     context: Context,
     nav: NavHostController,
-    vm: UsersViewModel = remember { UsersViewModel() }
+    userVm: UsersViewModel = remember { UsersViewModel() },
+    projectsVm: ProjectsViewModel = remember { ProjectsViewModel() }
 ) {
-    val isLoading by vm.isLoading.collectAsState()
-    val error by vm.error.collectAsState()
-    val user by vm.user.collectAsState()
-    var password by remember { mutableStateOf("") }
-    var showPass by remember { mutableStateOf(false) }
+    val user by userVm.user.collectAsState()
+    val userLoading by userVm.isLoading.collectAsState()
+    val projects by projectsVm.projects.collectAsState()
+    val projectsLoading by projectsVm.isLoading.collectAsState()
+    val error by projectsVm.error.collectAsState()
 
     LaunchedEffect(Unit) {
-        Prefs.loadEmail(context)?.let { vm.loadByEmail(it) }
-        password = Prefs.loadPassword(context) ?: ""
+        Prefs.loadEmail(context)?.let(userVm::loadByEmail)
     }
 
-    // estado editable
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var salaryText by remember { mutableStateOf("") }
-    var imageUrl by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(user) {
-        user?.let {
-            username = listOfNotNull(it.name, it.lastName).joinToString(" ")
-            email = it.email
-            salaryText = it.salary?.toString() ?: ""
-            imageUrl = it.imageUrl
+    LaunchedEffect(user?.id, user?.roles) {
+        val currentUser = user ?: return@LaunchedEffect
+        val isLeader = currentUser.roles.any { it.equals("ROLE_LEADER", ignoreCase = true) }
+        if (isLeader) {
+            projectsVm.loadByLeader(currentUser.id)
+        } else {
+            projectsVm.loadByMember()
         }
     }
 
-    var showImageDialog by remember { mutableStateOf(false) }
-    var tempUrl by remember { mutableStateOf(imageUrl.orEmpty()) }
-
-    if (showImageDialog) {
-        AlertDialog(
-            onDismissRequest = { showImageDialog = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    imageUrl = tempUrl.ifBlank { null }
-                    showImageDialog = false
-                }) { Text("Usar") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showImageDialog = false }) { Text("Cancelar") }
-            },
-            title = { Text("Cambiar imagen") },
-            text = {
-                Column {
-                    Text("Pega el enlace (PNG/JPG):")
-                    OutlinedTextField(
-                        value = tempUrl,
-                        onValueChange = { tempUrl = it },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        )
-    }
-
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(TeamBackground)
     ) {
-        Text(
-            text = "Perfil",
-            style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-        )
+        when {
+            (userLoading && user == null) || (projectsLoading && projects.isEmpty()) -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = TeamBrand)
+                }
+            }
 
-        Spacer(Modifier.height(4.dp))
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        AppTopHeader(
+                            user = user,
+                            onNotificationsClick = { nav.navigate("notification") },
+                            onProfileClick = { }
+                        )
+                    }
 
-        Box(
-            Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            AsyncImage(
-                model = imageUrl ?: R.drawable.ic_profile_placeholder,
-                contentDescription = "Avatar",
-                modifier = Modifier
-                    .size(140.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFEAEAEA))
-                    .clickable {
-                        tempUrl = imageUrl.orEmpty()
-                        showImageDialog = true
-                    },
-                contentScale = ContentScale.Crop
-            )
+                    item {
+                        Column {
+                            Text(
+                                text = "Team",
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = TeamTextPrimary
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Select a project to view its member list.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TeamTextSecondary
+                            )
+                        }
+                    }
+
+                    if (!error.isNullOrBlank()) {
+                        item {
+                            Text(
+                                text = error.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+
+                    if (projects.isEmpty()) {
+                        item {
+                            EmptyTeamProjects()
+                        }
+                    } else {
+                        items(
+                            items = projects,
+                            key = { it.projectId }
+                        ) { project ->
+                            TeamProjectCard(
+                                project = project,
+                                onClick = { nav.navigate("memberList/${project.projectId}") }
+                            )
+                        }
+                    }
+                }
+            }
         }
+    }
+}
 
-        Spacer(Modifier.height(20.dp))
-
+@Composable
+private fun EmptyTeamProjects() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(16.dp))
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline, // Brownish900
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 20.dp, vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Label("UserName")
-            TextField(
-                value = username,
-                onValueChange = { username = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(0.dp),
-                colors = fieldColors()
-            )
-
-            Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
-
-            Label("Email")
-            TextField(
-                value = email,
-                onValueChange = {},
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                enabled = false,
-                shape = RoundedCornerShape(0.dp),
-                colors = fieldColors(disabled = true)
-            )
-
-            Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
-
-            Label("Contraseña")
-            TextField(
-                value = password,
-                onValueChange = {},
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = if (showPass) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                trailingIcon = {
-                    IconButton(onClick = { showPass = !showPass }) {
-                        Image(
-                            modifier = Modifier.size(25.dp),
-                            painter = painterResource(
-                                if (showPass) R.drawable.visibilityoff else R.drawable.visibility
-                            ),
-                            contentDescription = null
-                        )
-                    }
-                },
-                shape = RoundedCornerShape(0.dp),
-                colors = fieldColors()
-            )
-
-            Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
-
-            Label("Pago por Hora")
-            TextField(
-                value = salaryText,
-                onValueChange = { salaryText = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = RoundedCornerShape(0.dp),
-                colors = fieldColors()
-            )
-        }
-        // *********** FIN COLUMN DEL FORMULARIO ***********
-
-        Spacer(Modifier.height(24.dp))
-
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Button(
-                onClick = { /* aún no activo */ },
-                enabled = true, // para que se vea mejor en el diseño
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer, // Blush100
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer    // Brownish900
+            Text(
+                text = "No projects available",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = TeamTextPrimary
                 )
-            ) { Text("Unirte a un proyecto") }
-
-            Button(
-                onClick = {
-                    val salary = salaryText.toDoubleOrNull()
-                    vm.updateProfile(username = username, imageUrl = imageUrl, salary = salary)
-                },
-                enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,  // A62424
-                    contentColor = MaterialTheme.colorScheme.onPrimary   // White
-                )
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(Modifier.width(8.dp))
-                }
-                Text("Guardar Cambios")
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        TextButton(
-            onClick = {
-                Prefs.clearToken(context)
-                TokenStore.token = null
-                nav.navigate("login") {
-                    popUpTo("projects") { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-        ) {
-            Text("Cerrar sesión", color = MaterialTheme.colorScheme.error)
-        }
-
-        if (!error.isNullOrBlank()) {
-            Spacer(Modifier.height(8.dp))
-            Text(error ?: "", color = MaterialTheme.colorScheme.error)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Projects will appear here so you can open each member list.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TeamTextSecondary
+            )
         }
     }
 }
 
 @Composable
-private fun Label(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSecondaryContainer,
-        modifier = Modifier.padding(start = 4.dp, top = 6.dp, bottom = 4.dp)
-    )
+fun TeamProjectCard(
+    project: ProjectDto,
+    onClick: () -> Unit
+) {
+    val imageModel = if (project.imageUrl.isNullOrBlank()) {
+        R.drawable.taskmaster_logoblanco
+    } else {
+        project.imageUrl
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = imageModel,
+                contentDescription = project.name,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(TeamSurface),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = project.name,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = TeamTextPrimary
+                    )
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = project.description.ifBlank { "No description available" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TeamTextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TeamBadge(text = formatProjectDate(project.endDate))
+                    TeamCodeBadge(text = "#${project.key}")
+                }
+            }
+        }
+    }
 }
 
 @Composable
-private fun fieldColors(disabled: Boolean = false): TextFieldColors {
-    val baseText = MaterialTheme.colorScheme.onSecondaryContainer // marrón
-    val disabledText = if (disabled) baseText.copy(alpha = 0.6f) else baseText
+private fun TeamBadge(text: String) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(TeamSurface)
+            .border(1.dp, TeamBorder, RoundedCornerShape(999.dp))
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+            color = TeamTextSecondary
+        )
+    }
+}
 
-    return TextFieldDefaults.colors(
-        // Fondo transparente para que se vea el blanco del card
-        focusedContainerColor = Color.Transparent,
-        unfocusedContainerColor = Color.Transparent,
-        disabledContainerColor = Color.Transparent,
+@Composable
+private fun TeamCodeBadge(text: String) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(TeamBrand.copy(alpha = 0.10f))
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = TeamBrand
+        )
+    }
+}
 
-        // Texto marrón
-        focusedTextColor = baseText,
-        unfocusedTextColor = baseText,
-        disabledTextColor = disabledText,
+private fun formatProjectDate(raw: String): String {
+    val parsed = parseProjectDate(raw) ?: return raw
+    return parsed.toLocalDate().toString()
+}
 
-        // Indicador/underline invisible (ya usamos Divider)
-        focusedIndicatorColor = Color.Transparent,
-        unfocusedIndicatorColor = Color.Transparent,
-        disabledIndicatorColor = Color.Transparent,
-        errorIndicatorColor = MaterialTheme.colorScheme.error,
-
-        // Cursor y selección
-        cursorColor = MaterialTheme.colorScheme.primary,
-
-        // Labels (por si algún campo usa label interna)
-        focusedLabelColor = baseText,
-        unfocusedLabelColor = baseText
-    )
+private fun parseProjectDate(raw: String?): ZonedDateTime? {
+    if (raw.isNullOrBlank()) return null
+    return try {
+        OffsetDateTime.parse(raw).toZonedDateTime()
+    } catch (_: DateTimeParseException) {
+        try {
+            ZonedDateTime.parse(raw)
+        } catch (_: DateTimeParseException) {
+            try {
+                LocalDateTime.parse(raw, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    .atZone(ZoneId.systemDefault())
+            } catch (_: DateTimeParseException) {
+                null
+            }
+        }
+    }
 }

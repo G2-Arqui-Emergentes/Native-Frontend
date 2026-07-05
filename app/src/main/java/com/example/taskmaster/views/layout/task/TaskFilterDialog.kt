@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.taskmaster.R
 import com.example.taskmaster.viewmodel.ui.users.UsersViewModel
-import com.example.taskmaster.views.layout.project.PriorityFilter
+import com.example.taskmaster.views.layout.project. PriorityFilter
 import com.example.taskmaster.views.layout.project.StatusFilter
 import com.example.taskmaster.views.layout.project.TaskFilters
 import java.util.Calendar
@@ -58,14 +58,14 @@ fun TaskFilterDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Filtros",
+                    text = "Filters",
                     style = MaterialTheme.typography.titleLarge
                 )
 
                 Spacer(Modifier.height(12.dp))
                 Column(Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Prioridad:",
+                        text = "Priority:",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Row(
@@ -78,7 +78,7 @@ fun TaskFilterDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             FilterRadioChip(
-                                label = "Alta",
+                                label = "High",
                                 selected = priority == PriorityFilter.HIGH,
                                 onClick = {
                                     priority =
@@ -87,7 +87,7 @@ fun TaskFilterDialog(
                                 }
                             )
                             FilterRadioChip(
-                                label = "Media",
+                                label = "Medium",
                                 selected = priority == PriorityFilter.MEDIUM,
                                 onClick = {
                                     priority =
@@ -96,7 +96,7 @@ fun TaskFilterDialog(
                                 }
                             )
                             FilterRadioChip(
-                                label = "Baja",
+                                label = "Low",
                                 selected = priority == PriorityFilter.LOW,
                                 onClick = {
                                     priority =
@@ -113,7 +113,7 @@ fun TaskFilterDialog(
 
                 Column(Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Miembro:",
+                        text = "Assignee:",
                         style = MaterialTheme.typography.bodySmall
                     )
                     Spacer(Modifier.height(4.dp))
@@ -122,13 +122,13 @@ fun TaskFilterDialog(
 
                     Box {
                         val selectedMemberName = when {
-                            membersLoading -> "Cargando..."
+                            membersLoading -> "Loading..."
                             !membersError.isNullOrBlank() -> "Error"
-                            selectedMemberId == null -> "Todos"
+                            selectedMemberId == null -> "All"
                             else -> {
                                 members.firstOrNull { it.id == selectedMemberId }?.let {
                                     "${it.name} ${it.lastName}"
-                                } ?: "Todos"
+                                } ?: "All"
                             }
                         }
 
@@ -148,7 +148,7 @@ fun TaskFilterDialog(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = "Seleccionar miembro"
+                                        contentDescription = "Select assignee"
                                     )
                                 }
                             }
@@ -159,7 +159,7 @@ fun TaskFilterDialog(
                             onDismissRequest = { memberMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Todos") },
+                                text = { Text("All") },
                                 onClick = {
                                     selectedMemberId = null
                                     memberMenu = false
@@ -183,7 +183,7 @@ fun TaskFilterDialog(
                 // -------- ESTADO --------
                 Column(Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Estado:",
+                        text = "Status:",
                         style = MaterialTheme.typography.bodySmall
                     )
                     Spacer(Modifier.height(4.dp))
@@ -192,10 +192,10 @@ fun TaskFilterDialog(
 
                     Box {
                         val statusLabel = when (status) {
-                            null -> "Todos"
-                            StatusFilter.TO_DO -> "Por hacer"
-                            StatusFilter.IN_PROGRESS -> "En progreso"
-                            StatusFilter.DONE -> "Completada"
+                            null -> "All"
+                            StatusFilter.TO_DO -> "To Do"
+                            StatusFilter.IN_PROGRESS -> "In Progress"
+                            StatusFilter.DONE -> "Done"
                         }
 
                         OutlinedTextField(
@@ -209,7 +209,7 @@ fun TaskFilterDialog(
 
                                     Icon(
                                         imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = "Seleccionar estado",
+                                        contentDescription = "Select status",
 
 
 
@@ -223,28 +223,28 @@ fun TaskFilterDialog(
                             onDismissRequest = { statusMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Todos") },
+                                text = { Text("All") },
                                 onClick = {
                                     status = null
                                     statusMenu = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Por hacer") },
+                                text = { Text("To Do") },
                                 onClick = {
                                     status = StatusFilter.TO_DO
                                     statusMenu = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("En progreso") },
+                                text = { Text("In Progress") },
                                 onClick = {
                                     status = StatusFilter.IN_PROGRESS
                                     statusMenu = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Completada") },
+                                text = { Text("Done") },
                                 onClick = {
                                     status = StatusFilter.DONE
                                     statusMenu = false
@@ -259,7 +259,7 @@ fun TaskFilterDialog(
                 // -------- RANGO DE FECHAS --------
                 Column(Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Rango de fechas:",
+                        text = "Date range:",
                         style = MaterialTheme.typography.bodySmall
                     )
                     Spacer(Modifier.height(4.dp))
@@ -269,13 +269,13 @@ fun TaskFilterDialog(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         FilterDateField(
-                            label = "Fecha inicio",
+                            label = "Start date",
                             value = dateFrom,
                             onPick = { dateFrom = it },
                             modifier = Modifier.weight(1f)
                         )
                         FilterDateField(
-                            label = "Fecha fin",
+                            label = "End date",
                             value = dateTo,
                             onPick = { dateTo = it },
                             modifier = Modifier.weight(1f)
@@ -299,7 +299,7 @@ fun TaskFilterDialog(
                             dateTo = ""
                         }
                     ) {
-                        Text("Limpiar")
+                        Text("Clear")
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
@@ -315,7 +315,7 @@ fun TaskFilterDialog(
                             )
                         }
                     ) {
-                        Text("Aplicar")
+                        Text("Apply")
                     }
                 }
             }
@@ -384,7 +384,7 @@ private fun FilterDateField(
                 Icon(
                     painter = painterResource(R.drawable.ic_calendar),
                     modifier = Modifier.size(18.dp),
-                    contentDescription = "Elegir fecha"
+                    contentDescription = "Pick date"
                 )
             }
         }

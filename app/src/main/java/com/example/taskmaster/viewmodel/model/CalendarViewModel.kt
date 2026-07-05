@@ -95,6 +95,20 @@ class CalendarViewModel(
         }
     }
 
+    fun loadTasksByUser(userId: Long) {
+        scope.launch {
+            try {
+                _isLoading.value = true
+                _error.value = null
+                _allTasks.value = tasksRepo.getByUser(userId)
+            } catch (e: Exception) {
+                _error.value = e.message
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     private fun generateCalendarDays(yearMonth: YearMonth, tasks: List<TaskDto>): List<CalendarDay> {
         val firstDayOfMonth = yearMonth.atDay(1)
         val lastDayOfMonth = yearMonth.atEndOfMonth()

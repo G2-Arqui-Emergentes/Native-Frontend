@@ -1,6 +1,7 @@
 package com.example.taskmaster.views.layout.project
 
 import android.app.DatePickerDialog
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,17 +18,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.taskmaster.R
+import com.example.taskmaster.views.layout.common.AppTopHeader
 import com.example.taskmaster.viewmodel.model.ProjectsViewModel
+import com.example.taskmaster.viewmodel.sharedPreferences.Prefs
+import com.example.taskmaster.viewmodel.ui.users.UsersViewModel
 import java.util.Calendar
 
 @Composable
 fun ProjectCreate(
+    context: Context,
     nav: NavHostController,
-    vm: ProjectsViewModel = remember { ProjectsViewModel() }
+    vm: ProjectsViewModel = remember { ProjectsViewModel() },
+    userVm: UsersViewModel = remember { UsersViewModel() }
 ) {
     val isLoading by vm.isLoading.collectAsState()
     val error by vm.error.collectAsState()
     val created by vm.created.collectAsState()
+    val user by userVm.user.collectAsState()
 
     // state UI
     var name by remember { mutableStateOf("") }
@@ -36,6 +43,10 @@ fun ProjectCreate(
     var budgetText by remember { mutableStateOf("") }
     var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        Prefs.loadEmail(context)?.let(userVm::loadByEmail)
+    }
 
     LaunchedEffect(created) {
         if (created != null) {
@@ -47,7 +58,15 @@ fun ProjectCreate(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
+        AppTopHeader(
+            user = user,
+            onNotificationsClick = { nav.navigate("notification") },
+            onProfileClick = { nav.navigate("profile") },
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        )
+
         // Top bar mockup
         Row(
             modifier = Modifier

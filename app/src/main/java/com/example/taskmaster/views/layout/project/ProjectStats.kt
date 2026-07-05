@@ -41,7 +41,9 @@ fun ProjectStats(
             Column {
                 ProjectTopBar(
                     title = project?.name ?: "Estadísticas",
-                    onBack = { nav.popBackStack() }
+                    onBack = { nav.popBackStack() },
+                    onNotificationsClick = { nav.navigate("notification") },
+                    onProfileClick = { nav.navigate("profile") }
                 )
                 ProjectMiniTabs(
                     selected = ProjectSection.STATS,

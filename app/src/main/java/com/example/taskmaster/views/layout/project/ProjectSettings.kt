@@ -121,7 +121,9 @@ fun ProjectSettings(
             Column {
                 ProjectTopBar(
                     title = project?.name ?: "",
-                    onBack = { nav.popBackStack() }
+                    onBack = { nav.popBackStack() },
+                    onNotificationsClick = { nav.navigate("notification") },
+                    onProfileClick = { nav.navigate("profile") }
                 )
                 ProjectMiniTabs(
                     selected = ProjectSection.SETTINGS,

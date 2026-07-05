@@ -54,6 +54,18 @@ class ProjectsViewModel(
         }
     }
 
+    fun loadByMember() = scope.launch {
+        try {
+            _isLoading.value = true
+            _projects.value = repo.getByMember()
+            _error.value = null
+        } catch (e: Exception) {
+            _error.value = e.message
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
     fun create(
         name: String,
         description: String,
@@ -127,7 +139,11 @@ class ProjectsViewModel(
     fun delete(id: Long) = viewModelScope.launch {
         _isLoading.value = true
         runCatching { repo.delete(id) }
-            .onSuccess {  _current.value = null }
+            .onSuccess {
+                _current.value = null
+                _projects.value = _projects.value.filterNot { it.projectId == id || it.id == id }
+                _error.value = null
+            }
             .onFailure { _error.value = it.message }
         _isLoading.value = false
     }

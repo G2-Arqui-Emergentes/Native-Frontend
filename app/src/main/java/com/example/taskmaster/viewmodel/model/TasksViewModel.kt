@@ -94,4 +94,9 @@ class TasksViewModel(
         repo.delete(taskId)
         loadAll()
     }
+
+    fun deleteFromProject(projectId: Long, taskId: Long) = launchCatching(_isLoading, _error) {
+        repo.delete(taskId)
+        _tasks.value = repo.getByProject(projectId)
+    }
 }

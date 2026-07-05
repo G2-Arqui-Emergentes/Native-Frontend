@@ -137,7 +137,7 @@ fun Navi(context: Context) {
 
             composable("projects") { Proyect(context,nav) }
 
-            composable("projectCreate") { ProjectCreate(nav) }
+            composable("projectCreate") { ProjectCreate(context, nav) }
 
             composable(
                 route = "projectSettings/{projectId}",
@@ -193,9 +193,9 @@ fun Navi(context: Context) {
             }
 
 
-            composable("tasks")        { Task() }
-            composable("calendar")     { Calendar() }
-            composable("notification") { Notifiations() }
+            composable("tasks")        { Task(context, nav) }
+            composable("calendar")     { Calendar(context) }
+            composable("notification") { Notifiations(context, nav) }
             composable("profile")      { UserProfile(context, nav) }
             composable("membership")   { Membership(nav) }
 
