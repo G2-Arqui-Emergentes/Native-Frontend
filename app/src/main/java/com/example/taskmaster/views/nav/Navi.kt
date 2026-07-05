@@ -33,7 +33,7 @@ import com.example.taskmaster.views.layout.project.UserStats
 import com.example.taskmaster.views.layout.task.CreateTask
 import com.example.taskmaster.views.layout.task.EditTask
 
-data class BottomTab(val route: String, val icon: Int)
+data class BottomTab(val route: String, val icon: Int, val label: String)
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -42,11 +42,11 @@ fun Navi(context: Context) {
 
     // Tabs principales
     val tabsIcons = listOf(
-        BottomTab("projects",     R.drawable.ic_proyect),
-        BottomTab("tasks",        R.drawable.ic_task),
-        BottomTab("calendar",     R.drawable.ic_calendar),
-        BottomTab("notification", R.drawable.ic_bell),
-        BottomTab("profile",      R.drawable.ic_user)
+        BottomTab("projects",     R.drawable.ic_dashboard, "Dashboard"),
+        BottomTab("tasks",        R.drawable.ic_projects, "Projects"),
+        BottomTab("calendar",     R.drawable.ic_calendar, "Calendar"),
+        BottomTab("notification", R.drawable.ic_analytics, "Analytics"),
+        BottomTab("profile",      R.drawable.ic_team, "Team")
     )
     val baseRoutes = tabsIcons.map { it.route }.toSet()
 
@@ -88,9 +88,12 @@ fun Navi(context: Context) {
                             icon = {
                                 Icon(
                                     painterResource(t.icon),
-                                    contentDescription = null,
+                                    contentDescription = t.label,
                                     modifier = Modifier.size(32.dp)
                                 )
+                            },
+                            label = {
+                                Text(text = t.label)
                             },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor   = MaterialTheme.colorScheme.primary,
