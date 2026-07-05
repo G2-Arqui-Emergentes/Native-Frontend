@@ -45,11 +45,8 @@ class CalendarViewModel(
     val selectedDateTasks = combine(_selectedDate, _allTasks) { date, tasks ->
         if (date == null) emptyList()
         else {
-            val dateString = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
             tasks.filter { task ->
-                val taskStartDate = task.startDate.take(10)
-                val taskEndDate = task.endDate.take(10)
-                dateString >= taskStartDate && dateString <= taskEndDate
+                parseTaskDate(task.endDate) == date
             }
         }
     }
@@ -109,6 +106,23 @@ class CalendarViewModel(
         }
     }
 
+    fun loadTasksByProjects(projectIds: List<Long>) {
+        scope.launch {
+            try {
+                _isLoading.value = true
+                _error.value = null
+                _allTasks.value = projectIds
+                    .distinct()
+                    .flatMap { tasksRepo.getByProject(it) }
+                    .distinctBy { it.taskId }
+            } catch (e: Exception) {
+                _error.value = e.message
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     private fun generateCalendarDays(yearMonth: YearMonth, tasks: List<TaskDto>): List<CalendarDay> {
         val firstDayOfMonth = yearMonth.atDay(1)
         val lastDayOfMonth = yearMonth.atEndOfMonth()
@@ -120,9 +134,7 @@ class CalendarViewModel(
         // Generar 6 semanas (42 días) para cubrir todo el calendario
         repeat(42) {
             val tasksForDay = tasks.filter { task ->
-                val taskStartDate = LocalDate.parse(task.startDate.take(10))
-                val taskEndDate = LocalDate.parse(task.endDate.take(10))
-                currentDate >= taskStartDate && currentDate <= taskEndDate
+                parseTaskDate(task.endDate) == currentDate
             }
 
             days.add(
@@ -137,6 +149,10 @@ class CalendarViewModel(
         }
 
         return days
+    }
+
+    private fun parseTaskDate(value: String): LocalDate? {
+        return runCatching { LocalDate.parse(value.take(10)) }.getOrNull()
     }
 
     private fun launchCatching(

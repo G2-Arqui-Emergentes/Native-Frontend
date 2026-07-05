@@ -15,12 +15,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.taskmaster.R
 import com.example.taskmaster.viewmodel.model.NotificationsViewModel
+import java.util.Locale
 
 @Composable
 fun NotificationList(
     searchQuery: String,
     vm: NotificationsViewModel = remember { NotificationsViewModel() }
 ) {
+    val isSpanish = Locale.getDefault().language.startsWith("es")
     val isLoading by vm.isLoading.collectAsState()
     val error by vm.error.collectAsState()
     val notifications by vm.notifications.collectAsState()
@@ -90,8 +92,10 @@ fun NotificationList(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(filtered) { notif ->
-                    NotificationCard(notification = notif) {
-                    }
+                    NotificationCard(
+                        notification = notif,
+                        isSpanish = isSpanish
+                    )
                 }
             }
         }

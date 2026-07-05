@@ -96,7 +96,6 @@ fun CreateTask(
 
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
     var priority by remember { mutableStateOf(TaskPriority.MEDIUM) }
     var priorityMenu by remember { mutableStateOf(false) }
@@ -225,6 +224,7 @@ fun CreateTask(
                                     .menuAnchor()
                                     .fillMaxWidth(),
                                 singleLine = true,
+                                textStyle = MaterialTheme.typography.bodySmall,
                                 shape = RoundedCornerShape(18.dp),
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(priorityMenu)
@@ -283,6 +283,7 @@ fun CreateTask(
                                     .fillMaxWidth(),
                                 singleLine = true,
                                 enabled = !membersLoading && members.isNotEmpty(),
+                                textStyle = MaterialTheme.typography.bodySmall,
                                 shape = RoundedCornerShape(18.dp),
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = memberMenu)
@@ -307,22 +308,11 @@ fun CreateTask(
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        LabeledField("Start date", Modifier.weight(1f)) {
-                            StyledDateField(
-                                value = startDate,
-                                onPick = { startDate = it }
-                            )
-                        }
-                        LabeledField("End date", Modifier.weight(1f)) {
-                            StyledDateField(
-                                value = endDate,
-                                onPick = { endDate = it }
-                            )
-                        }
+                    LabeledField("End date") {
+                        StyledDateField(
+                            value = endDate,
+                            onPick = { endDate = it }
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(22.dp))
@@ -334,7 +324,7 @@ fun CreateTask(
                                     projectId = projectId,
                                     title = title,
                                     description = description,
-                                    startDate = startDate,
+                                    startDate = "",
                                     endDate = endDate,
                                     status = TaskStatus.TO_DO.name,
                                     priority = priority.name,

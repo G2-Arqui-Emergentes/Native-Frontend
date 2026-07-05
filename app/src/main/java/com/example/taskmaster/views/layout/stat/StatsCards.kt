@@ -35,7 +35,7 @@ fun StatsCards(stats: ProjectStats) {
         )
 
         StatCard(
-            title = "Vencidas",
+            title = "Overdue",
             value = stats.overdueTasks.toString(),
             icon = R.drawable.ic_overdue_task,
             showTasks = true,
@@ -45,7 +45,7 @@ fun StatsCards(stats: ProjectStats) {
         )
 
         StatCard(
-            title = "Mejor miembro",
+            title = "Best Member",
             value = stats.bestMember,
             icon = R.drawable.ic_profile_placeholder2,
             showTasks = false,
@@ -93,7 +93,7 @@ fun StatCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = if (showTasks) "$value Tareas" else value,
+                text = if (showTasks) "$value Tasks" else value,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,

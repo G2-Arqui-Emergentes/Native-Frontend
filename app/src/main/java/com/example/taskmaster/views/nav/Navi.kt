@@ -24,6 +24,7 @@ import com.example.taskmaster.views.layout.Calendar
 
 import com.example.taskmaster.views.layout.notification.Notifiations
 import com.example.taskmaster.views.layout.UserProfile
+import com.example.taskmaster.views.layout.project.AnalyticsProjects
 import com.example.taskmaster.views.layout.project.MemberList
 import com.example.taskmaster.views.layout.project.Membership
 import com.example.taskmaster.views.layout.project.Proyect
@@ -53,7 +54,7 @@ fun Navi(context: Context) {
         BottomTab("projects",     R.drawable.ic_dashboard, "Dashboard"),
         BottomTab("tasks",        R.drawable.ic_projects, "Projects"),
         BottomTab("calendar",     R.drawable.ic_calendar, "Calendar"),
-        BottomTab("notification", R.drawable.ic_analytics, "Analytics"),
+        BottomTab("analytics",    R.drawable.ic_analytics, "Analytics"),
         BottomTab("profile",      R.drawable.ic_team, "Team")
     )
     val baseRoutes = tabsIcons.map { it.route }.toSet()
@@ -63,8 +64,10 @@ fun Navi(context: Context) {
 
     val showBottomBar =
         currentRoute in baseRoutes ||
+                currentRoute == "notification" ||
                 currentRoute == "projectCreate" ||
                 currentRoute == "membership" ||
+                currentRoute.startsWith("userStats") ||
                 currentRoute.startsWith("projectSettings") ||
                 currentRoute.startsWith("projectTasks") ||
                 currentRoute.startsWith("projectStats")
@@ -189,12 +192,13 @@ fun Navi(context: Context) {
                 route = "userStats/{userId}"
             ) { backStackEntry ->
                 val userId = backStackEntry.arguments?.getString("userId")?.toLong() ?: 0L
-                UserStats(nav = nav, userId = userId)
+                UserStats(context = context, nav = nav, userId = userId)
             }
 
 
             composable("tasks")        { Task(context, nav) }
-            composable("calendar")     { Calendar(context) }
+            composable("calendar")     { Calendar(context, nav) }
+            composable("analytics")    { AnalyticsProjects(context, nav) }
             composable("notification") { Notifiations(context, nav) }
             composable("profile")      { UserProfile(context, nav) }
             composable("membership")   { Membership(nav) }

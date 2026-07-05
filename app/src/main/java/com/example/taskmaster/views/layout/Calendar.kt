@@ -7,21 +7,45 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
@@ -29,15 +53,25 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.taskmaster.ui.theme.*
+import androidx.navigation.NavHostController
+import com.example.taskmaster.ui.theme.AlertRed
+import com.example.taskmaster.ui.theme.Brownish900
+import com.example.taskmaster.ui.theme.PriorityGreen
+import com.example.taskmaster.ui.theme.PriorityYellow
+import com.example.taskmaster.ui.theme.RedWine500
+import com.example.taskmaster.ui.theme.RedWine600
+import com.example.taskmaster.ui.theme.White
 import com.example.taskmaster.viewmodel.data.tasks.TaskDto
 import com.example.taskmaster.viewmodel.data.tasks.TaskPriority
 import com.example.taskmaster.viewmodel.model.CalendarDay
 import com.example.taskmaster.viewmodel.model.CalendarViewModel
+import com.example.taskmaster.viewmodel.model.ProjectsViewModel
 import com.example.taskmaster.viewmodel.sharedPreferences.Prefs
 import com.example.taskmaster.viewmodel.ui.users.UsersViewModel
+import com.example.taskmaster.views.layout.common.AppTopHeader
 import kotlinx.coroutines.launch
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -49,7 +83,9 @@ private const val CALENDAR_COLUMNS = 7
 @Composable
 fun Calendar(
     context: Context,
+    nav: NavHostController,
     userVm: UsersViewModel = remember { UsersViewModel() },
+    projectsVm: ProjectsViewModel = remember { ProjectsViewModel() },
     vm: CalendarViewModel = remember { CalendarViewModel() }
 ) {
     val isLoading by vm.isLoading.collectAsState()
@@ -59,36 +95,60 @@ fun Calendar(
     val calendarDays by vm.calendarDays.collectAsState(initial = emptyList())
     val selectedDateTasks by vm.selectedDateTasks.collectAsState(initial = emptyList())
     val user by userVm.user.collectAsState()
+    val projects by projectsVm.projects.collectAsState()
+
+    val locale = Locale.getDefault()
+    val isSpanish = locale.language.startsWith("es")
 
     LaunchedEffect(Unit) {
         Prefs.loadEmail(context)?.let(userVm::loadByEmail)
     }
 
-    LaunchedEffect(user?.id) {
-        val currentUserId = user?.id ?: return@LaunchedEffect
-        vm.loadTasksByUser(currentUserId)
+    LaunchedEffect(user?.id, user?.roles) {
+        val currentUser = user ?: return@LaunchedEffect
+        val isLeader = currentUser.roles.any { it.equals("ROLE_LEADER", ignoreCase = true) }
+        if (isLeader) {
+            projectsVm.loadByLeader(currentUser.id)
+        } else {
+            projectsVm.loadByMember()
+        }
+    }
+
+    LaunchedEffect(projects) {
+        val projectIds = projects.map { it.projectId }.filter { it > 0L }
+        if (projectIds.isNotEmpty()) {
+            vm.loadTasksByProjects(projectIds)
+        }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .background(Color(0xFFF9FAFB))
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        AppTopHeader(
+            user = user,
+            onNotificationsClick = { nav.navigate("notification") },
+            onProfileClick = { nav.navigate("profile") }
+        )
+
         Text(
-            text = "Calendario",
-            style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(bottom = 4.dp)
+            text = if (isSpanish) "Calendario" else "Calendar",
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         CalendarHeader(
             currentMonth = currentMonth,
+            locale = locale,
+            isSpanish = isSpanish,
             onPreviousMonth = { vm.navigateToMonth(currentMonth.minusMonths(1)) },
             onNextMonth = { vm.navigateToMonth(currentMonth.plusMonths(1)) }
         )
 
-        WeekDaysHeader()
+        WeekDaysHeader(isSpanish = isSpanish)
 
         CalendarGrid(
             calendarDays = calendarDays,
@@ -120,7 +180,12 @@ fun Calendar(
         }
 
         selectedDate?.let { date ->
-            TasksForSelectedDay(selectedDate = date, tasks = selectedDateTasks)
+            TasksForSelectedDay(
+                selectedDate = date,
+                tasks = selectedDateTasks,
+                locale = locale,
+                isSpanish = isSpanish
+            )
         }
     }
 }
@@ -128,6 +193,8 @@ fun Calendar(
 @Composable
 private fun CalendarHeader(
     currentMonth: YearMonth,
+    locale: Locale,
+    isSpanish: Boolean,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit
 ) {
@@ -136,25 +203,25 @@ private fun CalendarHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onPreviousMonth) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Mes anterior",
+        androidx.compose.material3.IconButton(onClick = onPreviousMonth) {
+            androidx.compose.material3.Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = if (isSpanish) "Mes anterior" else "Previous month",
                 tint = MaterialTheme.colorScheme.primary
             )
         }
 
         Text(
-            text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale("es", "ES"))} ${currentMonth.year}",
-            style = MaterialTheme.typography.displayMedium,
+            text = "${currentMonth.month.getDisplayName(TextStyle.FULL, locale)} ${currentMonth.year}",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
 
-        IconButton(onClick = onNextMonth) {
-            Icon(
-                imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Mes siguiente",
+        androidx.compose.material3.IconButton(onClick = onNextMonth) {
+            androidx.compose.material3.Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = if (isSpanish) "Mes siguiente" else "Next month",
                 tint = MaterialTheme.colorScheme.primary
             )
         }
@@ -162,8 +229,12 @@ private fun CalendarHeader(
 }
 
 @Composable
-private fun WeekDaysHeader() {
-    val weekDays = listOf("Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb")
+private fun WeekDaysHeader(isSpanish: Boolean) {
+    val weekDays = if (isSpanish) {
+        listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    } else {
+        listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    }
 
     Row(modifier = Modifier.fillMaxWidth()) {
         weekDays.forEach { day ->
@@ -192,27 +263,26 @@ private fun CalendarGrid(
     val density = LocalDensity.current
 
     Canvas(
-        modifier = modifier
-            .pointerInput(calendarDays) {
-                detectTapGestures(
-                    onTap = { offset ->
-                        val column = (offset.x / canvasSize.width * CALENDAR_COLUMNS).toInt()
-                        val row = (offset.y / canvasSize.height * CALENDAR_ROWS).toInt()
-                        val dayIndex = row * CALENDAR_COLUMNS + column
+        modifier = modifier.pointerInput(calendarDays) {
+            detectTapGestures(
+                onTap = { offset ->
+                    val column = (offset.x / canvasSize.width * CALENDAR_COLUMNS).toInt()
+                    val row = (offset.y / canvasSize.height * CALENDAR_ROWS).toInt()
+                    val dayIndex = row * CALENDAR_COLUMNS + column
 
-                        if (dayIndex < calendarDays.size) {
-                            onDayClick(calendarDays[dayIndex])
-                            clickAnimationOffset = offset
-                            scope.launch {
-                                animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
-                                    animationRadius = value
-                                }
-                                animationRadius = 0f
+                    if (dayIndex < calendarDays.size) {
+                        onDayClick(calendarDays[dayIndex])
+                        clickAnimationOffset = offset
+                        scope.launch {
+                            animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
+                                animationRadius = value
                             }
+                            animationRadius = 0f
                         }
                     }
-                )
-            }
+                }
+            )
+        }
     ) {
         val canvasHeight = size.height
         val canvasWidth = size.width
@@ -220,7 +290,6 @@ private fun CalendarGrid(
         val ySteps = canvasHeight / CALENDAR_ROWS
         val xSteps = canvasWidth / CALENDAR_COLUMNS
 
-        // Dibujar animación de click
         if (animationRadius > 0f) {
             val column = (clickAnimationOffset.x / canvasSize.width * CALENDAR_COLUMNS).toInt()
             val row = (clickAnimationOffset.y / canvasSize.height * CALENDAR_ROWS).toInt()
@@ -236,10 +305,7 @@ private fun CalendarGrid(
             clipPath(path) {
                 drawCircle(
                     brush = Brush.radialGradient(
-                        listOf(
-                            RedWine600.copy(alpha = 0.8f),
-                            RedWine600.copy(alpha = 0.2f)
-                        ),
+                        listOf(RedWine600.copy(alpha = 0.8f), RedWine600.copy(alpha = 0.2f)),
                         center = clickAnimationOffset,
                         radius = animationRadius + 0.1f
                     ),
@@ -249,14 +315,12 @@ private fun CalendarGrid(
             }
         }
 
-        // Dibujar bordes del calendario
         drawRoundRect(
             RedWine600,
             cornerRadius = CornerRadius(25f, 25f),
             style = Stroke(width = 15f)
         )
 
-        // Dibujar líneas horizontales
         for (i in 1 until CALENDAR_ROWS) {
             drawLine(
                 color = RedWine600,
@@ -266,7 +330,6 @@ private fun CalendarGrid(
             )
         }
 
-        // Dibujar líneas verticales
         for (i in 1 until CALENDAR_COLUMNS) {
             drawLine(
                 color = RedWine600,
@@ -276,12 +339,10 @@ private fun CalendarGrid(
             )
         }
 
-        // Dibujar números de días
         val textHeight = with(density) { 18.dp.toPx() }
         calendarDays.forEachIndexed { index, day ->
             val column = index % CALENDAR_COLUMNS
             val row = index / CALENDAR_COLUMNS
-
             val textPositionX = xSteps * column + 15f
             val textPositionY = row * ySteps + textHeight + 15f
 
@@ -293,7 +354,6 @@ private fun CalendarGrid(
                 else -> Brownish900
             }.toArgb()
 
-            // Fondo para día seleccionado
             if (isSelected) {
                 drawRoundRect(
                     RedWine600,
@@ -319,7 +379,6 @@ private fun CalendarGrid(
                 )
             }
 
-            // Indicador de tareas
             if (day.tasks.isNotEmpty()) {
                 drawCircle(
                     color = when (day.tasks.maxByOrNull { it.priority.ordinal }?.priority) {
@@ -329,26 +388,21 @@ private fun CalendarGrid(
                         null -> RedWine600
                     },
                     radius = 5f,
-                    center = Offset(
-                        column * xSteps + xSteps - 15f,
-                        row * ySteps + 15f
-                    )
+                    center = Offset(column * xSteps + xSteps - 15f, row * ySteps + 15f)
                 )
             }
 
-            drawContext.canvas.nativeCanvas.apply {
-                drawText(
-                    day.day.toString(),
-                    textPositionX,
-                    textPositionY,
-                    Paint().apply {
-                        textSize = textHeight
-                        color = textColor
-                        isFakeBoldText = isSelected || day.tasks.isNotEmpty()
-                        isAntiAlias = true
-                    }
-                )
-            }
+            drawContext.canvas.nativeCanvas.drawText(
+                day.day.toString(),
+                textPositionX,
+                textPositionY,
+                Paint().apply {
+                    textSize = textHeight
+                    color = textColor
+                    isFakeBoldText = isSelected || day.tasks.isNotEmpty()
+                    isAntiAlias = true
+                }
+            )
         }
     }
 }
@@ -356,7 +410,9 @@ private fun CalendarGrid(
 @Composable
 private fun TasksForSelectedDay(
     selectedDate: java.time.LocalDate,
-    tasks: List<TaskDto>
+    tasks: List<TaskDto>,
+    locale: Locale,
+    isSpanish: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -368,14 +424,18 @@ private fun TasksForSelectedDay(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Tareas para ${selectedDate.dayOfMonth} de ${selectedDate.month.getDisplayName(TextStyle.FULL, Locale("es", "ES"))}",
+                text = if (isSpanish) {
+                    "Tasks for ${selectedDate.dayOfMonth} ${selectedDate.month.getDisplayName(TextStyle.FULL, locale)}"
+                } else {
+                    "Tasks for ${selectedDate.dayOfMonth} ${selectedDate.month.getDisplayName(TextStyle.FULL, locale)}"
+                },
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             if (tasks.isEmpty()) {
                 Text(
-                    text = "No hay tareas programadas para este día",
+                    text = if (isSpanish) "No tasks scheduled for this day" else "No tasks scheduled for this day",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     modifier = Modifier.padding(vertical = 8.dp)
@@ -411,7 +471,6 @@ private fun TaskItemForCalendar(task: TaskDto) {
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Indicador de prioridad
             Box(
                 modifier = Modifier
                     .size(12.dp)
@@ -447,7 +506,6 @@ private fun TaskItemForCalendar(task: TaskDto) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(top = 4.dp)
                 ) {
-                    // Estado de la tarea
                     Surface(
                         shape = RoundedCornerShape(4.dp),
                         color = when (task.status.name) {
@@ -460,10 +518,10 @@ private fun TaskItemForCalendar(task: TaskDto) {
                     ) {
                         Text(
                             text = when (task.status.name) {
-                                "TO_DO" -> "Por hacer"
-                                "IN_PROGRESS" -> "En progreso"
-                                "DONE" -> "Completada"
-                                "CANCELED" -> "Cancelada"
+                                "TO_DO" -> "To do"
+                                "IN_PROGRESS" -> "In progress"
+                                "DONE" -> "Done"
+                                "CANCELED" -> "Canceled"
                                 else -> task.status.name
                             },
                             style = MaterialTheme.typography.labelSmall,
@@ -472,7 +530,6 @@ private fun TaskItemForCalendar(task: TaskDto) {
                         )
                     }
 
-                    // Prioridad
                     Surface(
                         shape = RoundedCornerShape(4.dp),
                         color = when (task.priority) {
@@ -483,9 +540,9 @@ private fun TaskItemForCalendar(task: TaskDto) {
                     ) {
                         Text(
                             text = when (task.priority) {
-                                TaskPriority.HIGH -> "Alta"
-                                TaskPriority.MEDIUM -> "Media"
-                                TaskPriority.LOW -> "Baja"
+                                TaskPriority.HIGH -> "High"
+                                TaskPriority.MEDIUM -> "Medium"
+                                TaskPriority.LOW -> "Low"
                             },
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),

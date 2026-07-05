@@ -31,7 +31,7 @@ import kotlin.math.max
 fun UserPriorityChart(stats: UserTaskStats) {
     val barColor = Color(0xFFb698cb)
     val maxBarHeight = 120.dp
-    val barLabels = listOf("Alta", "Media", "Baja")
+    val barLabels = listOf("High", "Medium", "Low")
     val barValues = listOf(
         stats.highPriorityTasks,
         stats.mediumPriorityTasks,
@@ -45,7 +45,7 @@ fun UserPriorityChart(stats: UserTaskStats) {
             .padding(16.dp)
     ) {
         Text(
-            text = "Prioridad de sus tareas",
+            text = "Task Priority",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold,

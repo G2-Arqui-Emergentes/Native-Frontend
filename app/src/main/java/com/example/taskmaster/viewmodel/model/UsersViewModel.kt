@@ -71,6 +71,33 @@ class UsersViewModel(
         }
     }
 
+    fun loadMembersForProjects(projectIds: List<Long>) {
+        scope.launch {
+            try {
+                _isLoading.value = true
+                val normalizedIds = projectIds.toSet()
+                val all = repo.getAll()
+
+                _members.value = all.filter { user ->
+                    user.roles.contains("ROLE_MEMBER") &&
+                        user.projectIds.any { pid ->
+                            val normalized = when (pid) {
+                                is Number -> pid.toLong()
+                                is String -> pid.toLongOrNull()
+                                else -> null
+                            }
+                            normalized != null && normalized in normalizedIds
+                        }
+                }
+                _error.value = null
+            } catch (e: Exception) {
+                _error.value = e.message
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun updateProfile(username: String, imageUrl: String?, salary: Double?) = scope.launch {
         try {
             val (name, lastName) = splitUsername(username)

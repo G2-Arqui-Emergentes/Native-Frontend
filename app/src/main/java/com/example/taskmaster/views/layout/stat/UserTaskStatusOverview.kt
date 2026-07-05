@@ -30,7 +30,7 @@ fun UserTaskStatusOverview(stats: UserTaskStats) {
             .padding(16.dp)
     ) {
         Text(
-            text = "Estado de sus tareas",
+            text = "Task Status",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold,
@@ -47,19 +47,19 @@ fun UserTaskStatusOverview(stats: UserTaskStats) {
             ) {
                 UserStatusItem(
                     color = Color(0xFFA62424),
-                    status = "Por hacer",
+                    status = "To do",
                     count = stats.todoTasks
                 )
 
                 UserStatusItem(
                     color = Color(0xFFF9E364),
-                    status = "En proceso",
+                    status = "In progress",
                     count = stats.inProgressTasks
                 )
 
                 UserStatusItem(
                     color = Color(0xFF82F687),
-                    status = "Terminadas",
+                    status = "Done",
                     count = stats.doneTasks
                 )
             }
@@ -104,7 +104,7 @@ fun UserStatusItem(
             )
 
             Text(
-                text = "$count tareas",
+                text = "$count tasks",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
             )

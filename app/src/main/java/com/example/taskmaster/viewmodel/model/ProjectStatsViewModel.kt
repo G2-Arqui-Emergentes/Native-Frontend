@@ -29,7 +29,7 @@ class ProjectStatsViewModel(
     private val _stats = MutableStateFlow(ProjectStats())
     val stats: StateFlow<ProjectStats> = _stats.asStateFlow()
 
-    fun loadProjectTasks(projectId: Long) {
+    fun loadProjectTasks(projectId: Long, budget: Double = 0.0) {
         _isLoading.value = true
         _error.value = null
 
@@ -37,7 +37,7 @@ class ProjectStatsViewModel(
             try {
                 val tasksList = tasksRepo.getByProject(projectId)
                 _tasks.value = tasksList
-                calculateStats(tasksList)
+                calculateStats(tasksList, budget)
             } catch (e: Exception) {
                 _error.value = "Error al cargar tareas: ${e.message}"
             } finally {
@@ -46,7 +46,7 @@ class ProjectStatsViewModel(
         }
     }
 
-    private suspend fun calculateStats(tasks: List<TaskDto>) {
+    private suspend fun calculateStats(tasks: List<TaskDto>, budget: Double) {
         val totalTasks = tasks.size
 
         val currentDate = Date()
@@ -73,6 +73,9 @@ class ProjectStatsViewModel(
         val bestMember = findBestMember(tasks)
         val worstMember = findWorstMember(tasks)
 
+        val completionRatio = if (totalTasks > 0) doneTasks.toDouble() / totalTasks.toDouble() else 0.0
+        val usedBudget = (budget * completionRatio).coerceIn(0.0, budget)
+
         _stats.value = ProjectStats(
             totalTasks = totalTasks,
             overdueTasks = overdueTasks,
@@ -84,8 +87,8 @@ class ProjectStatsViewModel(
             highPriorityTasks = highPriorityTasks,
             mediumPriorityTasks = mediumPriorityTasks,
             lowPriorityTasks = lowPriorityTasks,
-            budget = 15000.0,
-            usedBudget = 4500.0
+            budget = budget,
+            usedBudget = usedBudget
         )
     }
 
@@ -133,7 +136,7 @@ class ProjectStatsViewModel(
         }
     }
 
-    private fun findWorstMember(tasks: List<TaskDto>): String {
+    private suspend fun findWorstMember(tasks: List<TaskDto>): String {
         val userTodoCount = mutableMapOf<Long, Int>()
 
         tasks.forEach { task ->
@@ -146,9 +149,10 @@ class ProjectStatsViewModel(
 
         return if (userTodoCount.isNotEmpty()) {
             val worstUserId = userTodoCount.maxByOrNull { it.value }?.key
-            "Usuario $worstUserId"
+            val user = worstUserId?.let { usersRepo.getById(it) }
+            if (user != null) "${user.name} ${user.lastName}".trim() else "User $worstUserId"
         } else {
-            "Ninguno"
+            "None"
         }
     }
 }

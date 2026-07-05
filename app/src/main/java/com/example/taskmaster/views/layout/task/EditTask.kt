@@ -257,13 +257,8 @@ fun EditTask(
                 }
             }
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                LabeledField("Fecha inicio", Modifier.weight(1f)) {
-                    DateField(value = startDate) { startDate = it }
-                }
-                LabeledField("Fecha fin", Modifier.weight(1f)) {
-                    DateField(value = endDate) { endDate = it }
-                }
+            LabeledField("Deadline") {
+                DateField(value = endDate) { endDate = it }
             }
 
             Spacer(Modifier.height(24.dp))
