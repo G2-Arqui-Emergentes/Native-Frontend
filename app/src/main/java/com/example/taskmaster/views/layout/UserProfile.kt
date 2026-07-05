@@ -111,7 +111,7 @@ fun UserProfile(
                         AppTopHeader(
                             user = user,
                             onNotificationsClick = { nav.navigate("notification") },
-                            onProfileClick = { }
+                            onProfileClick = { nav.navigate("profile") }
                         )
                     }
 

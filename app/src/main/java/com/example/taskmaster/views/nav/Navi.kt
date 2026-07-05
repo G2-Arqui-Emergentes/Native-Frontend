@@ -23,6 +23,7 @@ import com.example.taskmaster.views.layout.task.Task
 import com.example.taskmaster.views.layout.Calendar
 
 import com.example.taskmaster.views.layout.notification.Notifiations
+import com.example.taskmaster.views.layout.ProfileScreen
 import com.example.taskmaster.views.layout.UserProfile
 import com.example.taskmaster.views.layout.project.AnalyticsProjects
 import com.example.taskmaster.views.layout.project.MemberList
@@ -55,7 +56,7 @@ fun Navi(context: Context) {
         BottomTab("tasks",        R.drawable.ic_projects, "Projects"),
         BottomTab("calendar",     R.drawable.ic_calendar, "Calendar"),
         BottomTab("analytics",    R.drawable.ic_analytics, "Analytics"),
-        BottomTab("profile",      R.drawable.ic_team, "Team")
+        BottomTab("team",         R.drawable.ic_team, "Team")
     )
     val baseRoutes = tabsIcons.map { it.route }.toSet()
 
@@ -65,6 +66,7 @@ fun Navi(context: Context) {
     val showBottomBar =
         currentRoute in baseRoutes ||
                 currentRoute == "notification" ||
+                currentRoute == "profile" ||
                 currentRoute == "projectCreate" ||
                 currentRoute == "membership" ||
                 currentRoute.startsWith("userStats") ||
@@ -200,7 +202,8 @@ fun Navi(context: Context) {
             composable("calendar")     { Calendar(context, nav) }
             composable("analytics")    { AnalyticsProjects(context, nav) }
             composable("notification") { Notifiations(context, nav) }
-            composable("profile")      { UserProfile(context, nav) }
+            composable("profile")      { ProfileScreen(context, nav) }
+            composable("team")         { UserProfile(context, nav) }
             composable("membership")   { Membership(nav) }
 
         }
